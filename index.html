@@ -1,0 +1,114 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduScore | Smart Result Calculator</title>
+  <link rel="stylesheet" th:href="@{/style.css}" href="/style.css" />
+</head>
+<body>
+  <main class="page">
+    <section class="upload-card">
+      <h1>File Upload &amp; Image Preview</h1>
+      <p class="subtitle">No Plugins Just Javascript</p>
+
+      <form class="upload-form" method="post" action="/upload" enctype="multipart/form-data">
+        <label for="image" class="drop-zone" id="dropZone">
+          <span class="icon" aria-hidden="true">&#8681;</span>
+          <span class="drop-title">Select a file or drag here</span>
+          <span class="button-like">Select a file</span>
+          <input id="image" name="image" type="file" accept="image/*" capture="environment" required />
+        </label>
+
+        <figure class="preview-wrap" id="previewWrap" hidden>
+          <img id="previewImage" alt="Preview" />
+        </figure>
+
+        <button type="submit" class="analyze-btn">Analyze Result</button>
+      </form>
+
+      <p class="error" th:if="${error}" th:text="${error}"></p>
+
+      <div class="metrics">
+        <article class="metric-card">
+          <h3>GPA</h3>
+          <p th:text="${gpa}">0.00</p>
+        </article>
+        <article class="metric-card">
+          <h3>Total Credits</h3>
+          <p th:text="${totalCredits}">0</p>
+        </article>
+      </div>
+
+      <section th:if="${subjects != null and !subjects.isEmpty()}">
+        <h2>Extracted Subject Analysis</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Credit</th>
+              <th>Grade</th>
+              <th>Grade Point</th>
+              <th>Credit x Grade Point</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="s : ${subjects}">
+              <td th:text="${s.subject}">Subject</td>
+              <td th:text="${s.credit}">4</td>
+              <td th:text="${s.grade}">A</td>
+              <td th:text="${s.gradePoint}">8</td>
+              <td th:text="${s.weightedPoint}">32</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <h2>OCR Raw Text</h2>
+      <pre th:text="${ocrText}">No OCR text yet.</pre>
+    </section>
+  </main>
+
+  <script>
+    const input = document.getElementById('image');
+    const previewWrap = document.getElementById('previewWrap');
+    const previewImage = document.getElementById('previewImage');
+    const dropZone = document.getElementById('dropZone');
+
+    function showPreview(file) {
+      if (!file || !file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImage.src = e.target.result;
+        previewWrap.hidden = false;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    input.addEventListener('change', (e) => showPreview(e.target.files[0]));
+
+    ['dragenter', 'dragover'].forEach((evt) => {
+      dropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragging');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach((evt) => {
+      dropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragging');
+      });
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      showPreview(file);
+    });
+  </script>
+</body>
+</html>
